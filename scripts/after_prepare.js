@@ -27,7 +27,7 @@ var setupEnv = function(){
         IOS: {
             dest: IOS_DIR + '/' + appName + '/Resources/GoogleService-Info.plist',
             src: [
-                // 'GoogleService-Info.plist',
+                'GoogleService-Info.plist',
                 IOS_DIR + '/www/GoogleService-Info.plist',
                 'www/GoogleService-Info.plist'
             ],
