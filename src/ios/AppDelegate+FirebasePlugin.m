@@ -138,10 +138,15 @@ static bool authStateChangeListenerInitialized = false;
 //Tells the app that a remote notification arrived that indicates there is data to be fetched.
 // Called when a message arrives in the foreground and remote notifications permission has been granted
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
-    fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
-
+fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
+    
     @try{
         [[FIRMessaging messaging] appDidReceiveMessage:userInfo];
+        if([[FIRAuth auth] canHandleNotification:userInfo] || [userInfo objectForKey:@"com.google.firebase.auth"] != nil){
+            [FirebasePlugin.firebasePlugin _logMessage:@"Received notification message intended for Firebase Auth"];
+            completionHandler(UIBackgroundFetchResultNoData);
+            return;
+        }
         mutableUserInfo = [userInfo mutableCopy];
         NSDictionary* aps = [mutableUserInfo objectForKey:@"aps"];
         bool isContentAvailable = false;
@@ -456,9 +461,14 @@ static bool authStateChangeListenerInitialized = false;
                         rawNonce:rawNonce];
                     
                     NSNumber* key = [[FirebasePlugin firebasePlugin] saveAuthCredential:credential];
+                    NSString *authorizationCode = [[NSString alloc] initWithData:appleIDCredential.authorizationCode
+                                                                        encoding:NSUTF8StringEncoding];
                     NSMutableDictionary* result = [[NSMutableDictionary alloc] init];
                     [result setValue:@"true" forKey:@"instantVerification"];
                     [result setValue:key forKey:@"id"];
+                    if(authorizationCode != nil){
+                        [result setValue:authorizationCode forKey:@"authorizationCode"];
+                    }
                     if(appleIDCredential.fullName != nil){
                         if(appleIDCredential.fullName.givenName != nil){
                             [result setValue:appleIDCredential.fullName.givenName forKey:@"givenName"];
